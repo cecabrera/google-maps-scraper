@@ -170,6 +170,19 @@ async def scrape_google_maps(query, max_places=None, lang="en", headless=True): 
 
                     if place_data:
                         place_data['link'] = link # Add the source link
+                        # Add direct reviews URL. Prefer the GAIA-style place_id (ChIJ...) from the link if present.
+                        place_id_value = place_data.get('place_id')
+                        reviews_place_id = None
+                        try:
+                            match = re.search(r'!19s(ChI[\w-]+)', link)
+                            if match:
+                                reviews_place_id = match.group(1)
+                        except Exception:
+                            reviews_place_id = None
+                        if not reviews_place_id and place_id_value:
+                            reviews_place_id = place_id_value
+                        if reviews_place_id:
+                            place_data['reviews_url'] = f"https://search.google.com/local/reviews?placeid={reviews_place_id}&hl={lang}"
                         results.append(place_data)
                         # print(json.dumps(place_data, indent=2)) # Optional: print data as it's scraped
                     else:
